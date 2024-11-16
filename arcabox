@@ -1,0 +1,132 @@
+
+#!/bin/sh
+
+# Check if the script is run as root
+if [ "$(id -u)" -ne 0 ]; then
+    echo "Please run as root"
+    exit 1
+fi
+
+set -e
+
+# Fallback function to unmount ROOTPATH on errors
+fallback() {
+    echo "An error occurred. Cleaning up..."
+    umount -R "$ROOTPATH" || echo "Failed to unmount ROOTPATH."
+    exit 1
+}
+
+# Create a new Arch bootstrap
+if [ "$1" = "create" ]; then
+    if [ -z "$2" ]; then
+        echo "Please provide a directory name."
+        exit 1
+    fi
+
+    # Sanitize container name (optional)
+    CONTAINER_NAME=$(echo "$2" | tr -cd '[:alnum:]-_')
+    TARGET_DIR="/usr/share/arcabox/containers/$CONTAINER_NAME"
+    
+    mkdir -p "$TARGET_DIR"
+    echo "Target directory: $TARGET_DIR"
+
+    echo "Downloading the Tarball..."
+    curl -LO "https://geo.mirror.pkgbuild.com/iso/latest/archlinux-bootstrap-x86_64.tar.zst" || fallback
+
+    echo "Extracting the Tarball..."
+    tar xvf archlinux-bootstrap-x86_64.tar.zst -C "$TARGET_DIR" --numeric-owner || fallback
+
+    echo "Cleaning up..."
+    rm -rvf archlinux-bootstrap-x86_64.tar.zst pkglist*.txt
+
+    ROOTPATH="$TARGET_DIR/root.x86_64"  # Ensure this is correct for your tarball structure
+    CHROOTPROG="$ROOTPATH/bin/arch-chroot"
+
+    echo "Preparing for Setup..."
+    # Bind the necessary root directory
+    mount --bind "$ROOTPATH" "$ROOTPATH" || fallback
+
+    echo "Setting up Pacman Keyring..."
+    # Create a setup.sh file in the chroot environment
+    cat << EOF > "$ROOTPATH/setup.sh"
+#!/bin/bash
+pacman-key --init
+pacman-key --populate
+exit
+EOF
+
+    chmod +x "$ROOTPATH/setup.sh"
+
+    # Run the setup.sh script inside the chroot
+    "$CHROOTPROG" "$ROOTPATH" bash /setup.sh || fallback
+
+    # Remove the setup.sh script after it's done
+    "$CHROOTPROG" "$ROOTPATH" rm /setup.sh
+
+    echo "Setting up Pacman Mirrorlist..."
+    # Add a mirror to pacman mirrorlist (only add if not already present)
+    echo "Server = https://geo.mirror.pkgbuild.com/\$repo/os/\$arch" >> "$ROOTPATH/etc/pacman.d/mirrorlist"
+
+    echo "Updating Package Repositories..."
+    "$CHROOTPROG" "$ROOTPATH" pacman -Sy || fallback
+
+    # Unmount the chroot directory after finishing
+    echo "Unmounting ROOTPATH..."
+    umount "$ROOTPATH" || echo "Failed to unmount ROOTPATH."
+
+    echo "Successfully Created an Arch Linux Bootstrap"
+
+# Open the chroot environment
+elif [ "$1" = "open" ]; then
+    if [ -z "$2" ]; then
+        echo "Please provide the container name."
+        exit 1
+    fi
+
+    ROOTPATH="/usr/share/arcabox/containers/$2/root.x86_64"
+
+    # Ensure the chroot environment exists
+    if [ ! -d "$ROOTPATH" ]; then
+        echo "Error: The bootstrap environment does not exist. Please create it first."
+        exit 1
+    fi
+
+    # Bind the necessary root directory
+    mount --bind "$ROOTPATH" "$ROOTPATH" || fallback
+
+    # Enter the chroot environment
+    "$ROOTPATH/bin/arch-chroot" "$ROOTPATH" || fallback
+
+    # Unmount the chroot directory after exiting
+    echo "Unmounting ROOTPATH..."
+    umount "$ROOTPATH" || echo "Failed to unmount ROOTPATH."
+
+    echo "Successfully exited the chroot environment"
+
+elif [ "$1" = "help" ]; then
+	ARCAVERSION="0.1"
+	echo "Arcabox version $ARCAVERSION"
+	echo "Arcabox is a tool to create Arch Linux cointainers"
+	echo "Usage: arcabox <command> <name>"
+	echo "Commands:"
+	echo "create	-	Create a new Container"
+	echo "open	-	Open a Container"
+	echo "delete	-	Delete a Container"
+	echo "Arcabox is licensed with GPLv3"
+
+elif [ "$1" = "delete" ]; then
+	# Check if it exists
+	ROOTPATH="/usr/share/arcabox/containers/$2"
+	if [ -d "$ROOTPATH" ]; then
+		echo
+	else
+		echo "Unknown Container: $2"
+	fi
+	umount -R "$ROOTPATH/root.x86_64"
+	rm -rf "$ROOTPATH"
+
+else
+    echo "Usage: $0 {create|open} <container_name>"
+    exit 1
+fi
+
