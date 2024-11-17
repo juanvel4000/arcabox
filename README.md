@@ -21,6 +21,7 @@ mv arcabox/arcabox /usr/local/bin/
 ```
 You can uninstall it by removing ```/usr/local/bin/arcabox```
 
+**or just run the install.sh**
 ## Features
 
 - Only requires: curl and tar
