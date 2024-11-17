@@ -95,7 +95,7 @@ elif [ "$1" = "open" ]; then
     mount --bind "$ROOTPATH" "$ROOTPATH" || fallback
 
     # Enter the chroot environment
-    "$ROOTPATH/bin/arch-chroot" "$ROOTPATH" "hostname $2" || fallback
+    "$ROOTPATH/bin/arch-chroot" "$ROOTPATH" || fallback
     "$ROOTPATH/bin/arch-chroot" "$ROOTPATH" || fallback
 
     # Unmount the chroot directory after exiting
