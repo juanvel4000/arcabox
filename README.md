@@ -26,6 +26,11 @@ You can uninstall it by removing ```/usr/local/bin/arcabox```
 - Download the PKGBUILD from the Releases Page, and install it with ```makepkg -si```
 ### For Debian Users
 - Grab the Package from the Releases Page, and install it with ```dpkg -i```
+### Others
+- Clone the Repository, and run
+```bash
+# ./install.sh install
+```
 ## Features
 
 - Only requires: curl and tar
