@@ -1,0 +1,9 @@
+Package: arcabox
+Architecture: any
+Version: 1.0
+Depends: tar, curl
+Description: Arch Linux Containers
+Maintainer: juanvel400 <juanvel400@proton.me>
+Priority: optional
+Section: utils
+

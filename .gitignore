@@ -1,4 +1,2 @@
-deb/
-*.deb
-makedeb
+debian/
 

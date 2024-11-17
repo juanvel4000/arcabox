@@ -66,11 +66,11 @@ EOF
     # Add a mirror to pacman mirrorlist (only add if not already present)
     echo "Server = https://geo.mirror.pkgbuild.com/\$repo/os/\$arch" >> "$ROOTPATH/etc/pacman.d/mirrorlist"
 
-    echo "Running pacman -Syu in $2..."
-    "$CHROOTPROG" "$ROOTPATH" pacman -Syu || fallback
+    echo "Updating Package Repositories..."
+    "$CHROOTPROG" "$ROOTPATH" pacman -Sy || fallback
 
     # Unmount the chroot directory after finishing
-    echo "Unmounting $2..."
+    echo "Unmounting ROOTPATH..."
     umount "$ROOTPATH" || echo "Failed to unmount $ROOTPATH."
 
     echo "Successfully Created an Arch Linux Bootstrap"
@@ -109,14 +109,9 @@ elif [ "$1" = "help" ]; then
 	echo "Arcabox is a tool to create Arch Linux cointainers"
 	echo "Usage: arcabox <command> <name>"
 	echo "Commands:"
-	echo "create			-	Create a new Container"
-	echo
-	echo "open			-	Open a Container"
-	echo
-	echo "delete			-	Delete a Container"
-	echo
-	echo "run <name> <command>	-	Run a command"
-	echo
+	echo "create	-	Create a new Container"
+	echo "open	-	Open a Container"
+	echo "delete	-	Delete a Container"
 	echo "Arcabox is licensed with GPLv3"
 
 elif [ "$1" = "delete" ]; then
@@ -138,37 +133,6 @@ fi
 	echo "Removing $2..."
 	rm -rf "$ROOTPATH"
 	echo "Done!"
-
-
-elif [ "$1" = "run" ]; then
-    ROOTPATH="/usr/share/arcabox/containers/$2/root.x86_64"
-    
-    # Check if the container root exists
-    if [ ! -d "$ROOTPATH" ]; then
-        echo "Error: Unable to find $ROOTPATH"
-        exit 1
-    fi
-    echo "Found $ROOTPATH"
-
-    # Try mounting the root directory, exit if it fails
-    if ! mount --bind "$ROOTPATH" "$ROOTPATH"; then
-        echo "Error: Failed to mount $ROOTPATH"
-        exit 1
-    fi
-
-    # Run the command inside the container using arch-chroot
-    if ! "$ROOTPATH/bin/arch-chroot" "$ROOTPATH" "$3"; then
-        echo "Error: Failed to run command inside the container"
-        umount "$ROOTPATH" || echo "Failed to unmount $ROOTPATH"
-        exit 1
-    fi
-
-    # Clean up: unmount the root directory after command execution
-    if ! umount "$ROOTPATH"; then
-        echo "Warning: Failed to unmount $ROOTPATH"
-    fi
-
-    echo "Command executed successfully inside $ROOTPATH"
 
 else
     echo "Check arcabox help"
