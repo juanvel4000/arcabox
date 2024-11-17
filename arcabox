@@ -122,7 +122,15 @@ elif [ "$1" = "delete" ]; then
 	else
 		echo "Unknown Container: $2"
 	fi
+
+
+if mount | grep "on $ROOTPATH/root.x86_64" > /dev/null 2>&1; then
+ #   echo "$DIR is mounted."
 	umount -R "$ROOTPATH/root.x86_64"
+else
+    echo "Not mounting"
+fi
+
 	rm -rf "$ROOTPATH"
 
 else
