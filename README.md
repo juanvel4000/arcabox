@@ -5,9 +5,6 @@ Arcabox is a tool to manage Arch Linux Containers easily
 
 It is very small and is written in bash
 
-
-
-
 ## Installation
 **Arch Linux**
 - The dependencies come with the System
@@ -22,6 +19,7 @@ It is very small and is written in bash
 ```bash
 # ./install.sh install
 ```
+- You can nest Arcabox as much as you may
 ## Features
 
 - Only requires: curl and tar
