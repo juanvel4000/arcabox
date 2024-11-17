@@ -1,4 +1,3 @@
-
 #!/bin/sh
 
 # Check if the script is run as root
@@ -72,7 +71,7 @@ EOF
 
     # Unmount the chroot directory after finishing
     echo "Unmounting ROOTPATH..."
-    umount "$ROOTPATH" || echo "Failed to unmount ROOTPATH."
+    umount "$ROOTPATH" || echo "Failed to unmount $ROOTPATH."
 
     echo "Successfully Created an Arch Linux Bootstrap"
 
@@ -100,7 +99,7 @@ elif [ "$1" = "open" ]; then
 
     # Unmount the chroot directory after exiting
     echo "Unmounting ROOTPATH..."
-    umount "$ROOTPATH" || echo "Failed to unmount ROOTPATH."
+    umount "$ROOTPATH" || echo "Failed to unmount $ROOTPATH."
 
     echo "Successfully exited the chroot environment"
 
@@ -129,10 +128,11 @@ if mount | grep "on $ROOTPATH/root.x86_64" > /dev/null 2>&1; then
  #   echo "$DIR is mounted."
 	umount -R "$ROOTPATH/root.x86_64"
 else
-    echo "Not mounting"
+    echo "$2 is not mounted"
 fi
-
+	echo "Removing $2..."
 	rm -rf "$ROOTPATH"
+	echo "Done!"
 
 else
     echo "Check arcabox help"
