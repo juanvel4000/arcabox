@@ -51,6 +51,8 @@ if [ "$1" = "create" ]; then
 #!/bin/bash
 pacman-key --init
 pacman-key --populate
+echo "PS1='\\w \\u arcabox-\\$ '" >> ~/.bashrc
+echo "alias exit="exit && exit""
 exit
 EOF
 
@@ -62,8 +64,7 @@ EOF
     # Remove the setup.sh script after it's done
     "$CHROOTPROG" "$ROOTPATH" rm /setup.sh
 
-    echo "Setting up Pacman Mirrorlist..."
-    # Add a mirror to pacman mirrorlist (only add if not already present)
+    echo "Setting up Pacman Mirrorlist"
     echo "Server = https://geo.mirror.pkgbuild.com/\$repo/os/\$arch" >> "$ROOTPATH/etc/pacman.d/mirrorlist"
 
     echo "Running pacman -Syu in $2..."
