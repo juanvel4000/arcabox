@@ -118,7 +118,7 @@ elif [ "$1" = "delete" ]; then
 	# Check if it exists
 	ROOTPATH="/usr/share/arcabox/containers/$2"
 	if [ -d "$ROOTPATH" ]; then
-		echo
+		echo "Found $ROOTPATH"
 	else
 		echo "Unknown Container: $2"
 	fi
