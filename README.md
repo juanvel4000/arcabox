@@ -10,21 +10,11 @@ It is very small and is written in bash
 
 ## Installation
 
-Clone this repository
-
-```bash
-    git clone https//github.com/juanvel4000/arcabox
-```
-To install the program, run this command
-```bash
-mv arcabox/arcabox /usr/local/bin/
-```
-You can uninstall it by removing ```/usr/local/bin/arcabox```
-
-**or just run the install.sh**
 ### For Arch Linux Users
+- The dependencies come with the System
 - Download the PKGBUILD from the Releases Page, and install it with ```makepkg -si```
 ### For Debian Users
+- You may need curl: ```apt-get update && apt-get install curl```
 - Grab the Package from the Releases Page, and install it with ```dpkg -i```
 ### Others
 - Clone the Repository, and run
@@ -37,5 +27,21 @@ You can uninstall it by removing ```/usr/local/bin/arcabox```
 - Easy to use
 - Written in bash
 - Very Small
-
+## Usage
+#### Create a container
+```bash
+# arcabox create mycontainer
+```
+#### Run a command on the container
+```bash
+# arcabox run mycontainer "exec /usr/bin/bash"
+```
+#### Delete a container
+```bash
+# arcabox delete mycontainer
+```
+#### Open a shell in the container
+```bash
+# arcabox open mycontainer
+```
 
