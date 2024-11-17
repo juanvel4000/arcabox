@@ -9,14 +9,15 @@ It is very small and is written in bash
 
 
 ## Installation
-
-### For Arch Linux Users
+**Arch Linux**
 - The dependencies come with the System
 - Download the PKGBUILD from the Releases Page, and install it with ```makepkg -si```
-### For Debian Users
+---
+**Debian**
 - You may need curl: ```apt-get update && apt-get install curl```
 - Grab the Package from the Releases Page, and install it with ```dpkg -i```
-### Others
+---
+**Others**
 - Clone the Repository, and run
 ```bash
 # ./install.sh install
