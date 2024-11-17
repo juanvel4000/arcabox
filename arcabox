@@ -126,7 +126,7 @@ elif [ "$1" = "delete" ]; then
 	rm -rf "$ROOTPATH"
 
 else
-    echo "Usage: $0 {create|open} <container_name>"
+    echo "Check arcabox help"
     exit 1
 fi
 
