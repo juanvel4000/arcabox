@@ -23,10 +23,9 @@ You can uninstall it by removing ```/usr/local/bin/arcabox```
 
 **or just run the install.sh**
 ### For Arch Linux Users
-Grab the PKGBUILD
-
-Download [PKGBUILD](http://juanvel4000.serv00.net/arcabox/PKGBUILD), And run makepkg -si
-You cant use an AUR Helper, because its not the AUR
+- Download the PKGBUILD from the Releases Page, and install it with ```makepkg -si```
+### For Debian Users
+- Grab the Package from the Releases Page, and install it with ```dpkg -i```
 ## Features
 
 - Only requires: curl and tar
