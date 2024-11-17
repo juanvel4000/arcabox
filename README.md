@@ -22,6 +22,13 @@ mv arcabox/arcabox /usr/local/bin/
 You can uninstall it by removing ```/usr/local/bin/arcabox```
 
 **or just run the install.sh**
+### For Arch Linux Users
+Add the Arcabox Repository (arcarepo) to your /etc/pacman.conf
+```bash
+[arcarepo]
+SigLevel = Optional TrustAll
+Server = https://juanvel4000.serv00.net/arcabox/repo/x86_64
+```
 ## Features
 
 - Only requires: curl and tar
