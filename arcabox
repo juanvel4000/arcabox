@@ -118,6 +118,8 @@ elif [ "$1" = "help" ]; then
 	echo
 	echo "run <name> <command>	-	Run a command"
 	echo
+	echo "list			-	List all containers"
+	echo
 	echo "Arcabox is licensed with GPLv3"
 
 elif [ "$1" = "delete" ]; then
@@ -170,6 +172,9 @@ elif [ "$1" = "run" ]; then
     fi
 
     echo "Command executed successfully inside $ROOTPATH"
+
+elif [ "$1" = "list" ]; then
+	ls /usr/share/arcabox/containers
 
 else
     echo "Check arcabox help"
