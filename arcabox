@@ -30,14 +30,13 @@ if [ "$1" = "create" ]; then
     echo "Target directory: $TARGET_DIR"
 
     echo "Downloading the Tarball..."
-    curl -LO "https://geo.mirror.pkgbuild.com/iso/latest/archlinux-bootstrap-x86_64.tar.zst" || fallback
+    curl -o "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst "https://geo.mirror.pkgbuild.com/iso/latest/archlinux-bootstrap-x86_64.tar.zst" || fallback
 
     echo "Extracting the Tarball..."
-    tar xvf archlinux-bootstrap-x86_64.tar.zst -C "$TARGET_DIR" --numeric-owner || fallback
+    tar xvf "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst -C "$TARGET_DIR" --numeric-owner || fallback
 
     echo "Cleaning up..."
-    rm -rvf archlinux-bootstrap-x86_64.tar.zst pkglist*.txt
-
+    rm -rvf "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst "$TARGET_DIR"/pkglist.x86_64.txt
     ROOTPATH="$TARGET_DIR/root.x86_64"  # Ensure this is correct for your tarball structure
     CHROOTPROG="$ROOTPATH/bin/arch-chroot"
 
