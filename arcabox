@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 
 RED='\033[0;31m' 
 GREEN='\033[0;32m'
@@ -11,52 +11,48 @@ if [ "$(id -u)" -ne 0 ]; then
     echo -e "${RED}${BOLD}=>${RESET}${BOLD} Please run as root${RESET}"
     exit 1
 fi
-
-set -e
-
-# Fallback function to unmount ROOTPATH on errors
 fallback() {
     echo -e "${RED}${BOLD}=>${RESET}${BOLD}An error occurred. Cleaning up...${RESET}"
-    umount -R "$ROOTPATH" || echo -e "${RED}${BOLD}=>${RESET}${BOLD}Failed to unmount ROOTPATH.${RESET}"
+    umount -R "$ROOTPATH" || echo -e "${RED}${BOLD}=>${RESET}${BOLD}Failed to unmount $ROOTPATH.${RESET}"
     exit 1
 }
 
-# Create a new Arch bootstrap
 if [ "$1" = "create" ]; then
     if [ -z "$2" ]; then
         echo -e "${RED}${BOLD}=>${RESET}${BOLD} Please give this Container a name with ${RESET}${UNDERLINE}arcabox create <name>${RESET}"
         exit 1
     fi
-
-    # Sanitize container name (optional)
     CONTAINER_NAME=$(echo "$2" | tr -cd '[:alnum:]-_')
     TARGET_DIR="/usr/share/arcabox/containers/$CONTAINER_NAME"
-    
+    if [ -d "$TARGET_DIR" ]; then
+        echo -e "${RED}${BOLD}=>${RESET}${BOLD} $2 already exists${RESET}"
+        exit
+    fi
     mkdir -p "$TARGET_DIR"
     echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Created ${RESET}${UNDERLINE}$TARGET_DIR${RESET}"
 
     echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Downloading the Tarball...${RESET}"
-    curl -o "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst "https://geo.mirror.pkgbuild.com/iso/latest/archlinux-bootstrap-x86_64.tar.zst" || fallback
+curl -o "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst https://geo.mirror.pkgbuild.com/iso/latest/archlinux-bootstrap-x86_64.tar.zst --progress-bar || fallback
 
     echo -e "${BOLD}${GREEN}=>${RESET}${BOLD}Extracting the Tarball...${RESET}"
-    tar -xf "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst -C "$TARGET_DIR" --numeric-owner || fallback
-   
+tar -xvf "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst -C "$TARGET_DIR" --numeric-owner || fallback
+
     echo -e "${GREEN}=> ${BOLD}${RESET}${BOLD}Cleaning up...${RESET}"
     rm -rvf "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst "$TARGET_DIR"/pkglist.x86_64.txt
-    ROOTPATH="$TARGET_DIR/root.x86_64"  # Ensure this is correct for your tarball structure
+    ROOTPATH="$TARGET_DIR/root.x86_64" 
     CHROOTPROG="$ROOTPATH/bin/arch-chroot"
 
     echo -e "${BOLD}${YELLOW}=> ${RESET}${BOLD}Preparing for Setup...${RESET}"
-    # Bind the necessary root directory
+
     mount --bind "$ROOTPATH" "$ROOTPATH" || fallback
 
-    echo -e "${BOLD}${YELLOW}=> ${RESET}${BOLD}Setting up Pacman Keyring...${RESET}"
-    # Create a setup.sh file in the chroot environment
+    echo -e "${BOLD}${YELLOW}=> ${RESET}${BOLD}Configuring the system${RESET}"
+
     cat << EOF > "$ROOTPATH/setup.sh"
 #!/bin/bash
 pacman-key --init
 pacman-key --populate
-echo "PS1='\\w \\u arcabox-\\$ '" >> ~/.bashrc
+echo "PS1='(arcabox)[\\u@\\h \\W]\\$'" >> ~/.bashrc
 exit
 EOF
 
@@ -65,20 +61,16 @@ EOF
     # Run the setup.sh script inside the chroot
     "$CHROOTPROG" "$ROOTPATH" bash /setup.sh || fallback
 
-    # Remove the setup.sh script after it's done
     "$CHROOTPROG" "$ROOTPATH" rm /setup.sh
-
     echo -e "${YELLOW}${BOLD}=> ${RESET}${BOLD}Setting up Pacman Mirrorlist${RESET}"
     echo "Server = https://geo.mirror.pkgbuild.com/\$repo/os/\$arch" >> "$ROOTPATH/etc/pacman.d/mirrorlist"
 
     echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Running pacman -Syu in $2...${RESET}"
     "$CHROOTPROG" "$ROOTPATH" pacman --noconfirm -Syu || fallback
 
-    # Unmount the chroot directory after finishing
+
     echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Finishing up${RESET}"
     umount "$ROOTPATH" || echo "Failed to unmount $ROOTPATH."
-
-# Open the chroot environment
 elif [ "$1" = "open" ]; then
     if [ -z "$2" ]; then
         echo -e "${BOLD}${RED}=> ${RESET}${BOLD}Please provide the container name.${RESET}"
@@ -87,24 +79,19 @@ elif [ "$1" = "open" ]; then
 
     ROOTPATH="/usr/share/arcabox/containers/$2/root.x86_64"
 
-    # Ensure the chroot environment exists
     if [ ! -d "$ROOTPATH" ]; then
         echo -e "${BOLD}${RED}=> ${RESET}${BOLD}$2 Does not exist. ${RESET}"
         exit 1
     fi
 
-    # Bind the necessary root directory
     mount --bind "$ROOTPATH" "$ROOTPATH" || fallback
 
-    # Enter the chroot environment
-    "$ROOTPATH/bin/arch-chroot" "$ROOTPATH" || fallback
     "$ROOTPATH/bin/arch-chroot" "$ROOTPATH" || fallback
 
-    # Unmount the chroot directory after exiting
-    echo -e "${BOLD}${GREEN}=>${RESET}${BOLD}Finishing up.${RESET}"
+    echo -e "${BOLD}${GREEN}=>${RESET}${BOLD}Successfully exited $2.${RESET}"
     umount "$ROOTPATH"
 elif [ "$1" = "help" ]; then
-	ARCAVERSION="1.1"
+	ARCAVERSION="1.2"
 	echo "Arcabox version $ARCAVERSION"
 	echo "Arcabox is a tool to create Arch Linux cointainers"
 	echo "Usage: arcabox <command> <name>"
@@ -118,11 +105,10 @@ elif [ "$1" = "help" ]; then
 	echo "run <name> <command>	-	Run a command"
 	echo
 	echo "list			-	List all containers"
-	echo
-	echo "Arcabox is licensed with GPLv3"
+    echo
+    echo "Licensed with GNU GPL version 3"
 
 elif [ "$1" = "delete" ]; then
-	# Check if it exists
 	ROOTPATH="/usr/share/arcabox/containers/$2"
 	if [ -d "$ROOTPATH" ]; then
 		echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Found $2${RESET}"
@@ -132,7 +118,6 @@ elif [ "$1" = "delete" ]; then
 
 
 if mount | grep "on $ROOTPATH/root.x86_64" > /dev/null 2>&1; then
- #   echo "$DIR is mounted."
 	umount -R "$ROOTPATH/root.x86_64"
 else
     echo -e "${YELLOW}${BOLD}=> ${RESET}${BOLD}$2 is not mounted${RESET}"
@@ -145,27 +130,18 @@ fi
 elif [ "$1" = "run" ]; then
     ROOTPATH="/usr/share/arcabox/containers/$2/root.x86_64"
     
-    # Check if the container root exists
     if [ ! -d "$ROOTPATH" ]; then
         echo -e "${BOLD}${RED}=>${RESET}${BOLD} Unable to find $2${RESET}"
         exit 1
     fi
     echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Found $2${RESET}"
 
-    # Try mounting the root directory, exit if it fails
     if ! mount --bind "$ROOTPATH" "$ROOTPATH"; then
         echo -e "${BOLD}${RED}=> ${RESET}${BOLD}Failed to mount $2${RESET}"
         exit 1
     fi
 
-    # Run the command inside the container using arch-chroot
-#    if ! "$ROOTPATH/bin/arch-chroot" "$ROOTPATH" "$3"; then
- #       echo -e "${BOLD}${RED}=> ${RESET}${BOLD}Unable to run '$3' in $2${RESET}"
-  #      umount "$ROOTPATH"
-   #     exit 1
-    #fi
 	"$ROOTPATH"/bin/arch-chroot "$ROOTPATH" "$3" || echo -e "${BOLD}${RED}=> ${RESET}${BOLD}Unable to run $3 in $2${RESET}"
-    # Clean up: unmount the root directory after command execution
 	umount -R "$ROOTPATH"
 
     echo -e "${GREEN}${BOLD}=>${RESET}${BOLD} Successfully ran '$3' in $2 ${RESET}"
@@ -177,4 +153,3 @@ else
     echo -e "${RED}${BOLD}=>${RESET}${BOLD} Check 'arcabox help'${RESET}"
     exit 1
 fi
-

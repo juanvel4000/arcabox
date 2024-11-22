@@ -11,10 +11,11 @@ It is very small and is written in bash
 - curl (For downloading the tarball)
 Arcabox only works in **x86_64** Linux-based Computers
 ### Installation Proccess
-- Clone the Repository, and run
+- Clone the Repository, and run (as root)
 ```bash
-# ./install.sh install
+./install.sh install
 ```
+
 - You can nest Arcabox as much as you may
 ## Features
 
