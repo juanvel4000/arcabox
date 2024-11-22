@@ -6,15 +6,11 @@ Arcabox is a tool to manage Arch Linux Containers easily
 It is very small and is written in bash
 
 ## Installation
-**Arch Linux**
-- The dependencies come with the System
-- Download the PKGBUILD from the Releases Page, and install it with ```makepkg -si```
----
-**Debian**
-- You may need curl: ```apt-get update && apt-get install curl```
-- Grab the Package from the Releases Page, and install it with ```dpkg -i```
----
-**Others**
+### Dependencies
+- tar (For extracting the tarball)
+- curl (For downloading the tarball)
+Arcabox only works in **x86_64** Linux-based Computers
+### Installation Proccess
 - Clone the Repository, and run
 ```bash
 # ./install.sh install
