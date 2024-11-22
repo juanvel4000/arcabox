@@ -164,22 +164,22 @@ elif [ "$1" = "run" ]; then
     fi
 
     # Run the command inside the container using arch-chroot
-    if ! "$ROOTPATH/bin/arch-chroot" "$ROOTPATH" "$3"; then
-        echo -e "${BOLD}${RED}=> ${RESET}${BOLD}Unable to run '$3' in $2${RESET}"
-        umount "$ROOTPATH"
-        exit 1
-    fi
-
+#    if ! "$ROOTPATH/bin/arch-chroot" "$ROOTPATH" "$3"; then
+ #       echo -e "${BOLD}${RED}=> ${RESET}${BOLD}Unable to run '$3' in $2${RESET}"
+  #      umount "$ROOTPATH"
+   #     exit 1
+    #fi
+	"$ROOTPATH"/bin/arch-chroot "$ROOTPATH" "$3" || echo -e "${BOLD}${RED}=> ${RESET}${BOLD}Unable to run $3 in $2${RESET}"
     # Clean up: unmount the root directory after command execution
+	umount -R "$ROOTPATH"
 
-
-    echo "Command executed successfully inside $ROOTPATH"
+    echo -e "${GREEN}${BOLD}=>${RESET}${BOLD} Successfully ran '$3' in $2 ${RESET}"
 
 elif [ "$1" = "list" ]; then
 	ls /usr/share/arcabox/containers
 
 else
-    echo -e "${RED}${BOLD}=>${RESET}${BOLD} Either the action doesnt exist, or there is no action, check arcbaox help${RESET}"
+    echo -e "${RED}${BOLD}=>${RESET}${BOLD} Check 'arcabox help'${RESET}"
     exit 1
 fi
 
