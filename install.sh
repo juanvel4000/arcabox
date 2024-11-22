@@ -2,19 +2,12 @@
 # Simple Install Script for Arcabox
 
 
-BLACK='\033[0;30m'
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-WHITE='\033[0;37m'
 RESET='\033[0m'  
 BOLD='\033[1m'   
-UNDERLINE='\033[4m'
 if [ "$UID" = "0" ]; then
-	SOMEUSELESSVARIABLE="yes"
+	echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Runnning as root${RESET}"
 else
 	echo -e "${BOLD}${RED}=> ${RESET}${BOLD}Please run as root${RESET}"
 	exit 1
