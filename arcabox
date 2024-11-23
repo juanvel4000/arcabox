@@ -102,7 +102,6 @@ EOF
 
     chmod +x "$ROOTPATH/setup.sh"
 
-    # Run the setup.sh script inside the chroot
     "$CHROOTPROG" "$ROOTPATH" bash /setup.sh || fallback
 
     "$CHROOTPROG" "$ROOTPATH" rm /setup.sh
@@ -134,10 +133,12 @@ elif [ "$1" = "open" ]; then
 
     mount --bind "$ROOTPATH" "$ROOTPATH" || fallback
 
+
     "$ROOTPATH/bin/arch-chroot" "$ROOTPATH" || fallback
 
     echo -e "${BOLD}${GREEN}=>${RESET}${BOLD}Successfully exited $2.${RESET}"
     umount "$ROOTPATH"
+
 elif [ "$1" = "help" ]; then
 	echo -e "Arcabox version ${UNDERLINE}$ARCAVERSION${RESET}"
 	echo "Arcabox is a tool to create Arch Linux cointainers"
@@ -234,7 +235,8 @@ elif [ "$1" = "backup" ]; then
     timestamp=$(date "+%S-%M-%H-%d-%m-%Y")
 
     checkmount "$ROOTPATH" "$2"
-
+    mount --bind "$ROOTPATH/root.x86_64" "$ROOTPATH/root.x86_64"
+    "$ROOTPATH/root.x86_64/bin/arch-chroot" "$ROOTPATH/root.x86_64" "rm -rf /var/cache"
     echo -e "${YELLOW}${BOLD}=> ${RESET}${BOLD}Creating Backup: $timestamp${RESET}"
     tar -cvf "$ROOTPATH/backups/$timestamp.backup.tar.xz" -I "xz" -C "$ROOTPATH" root.x86_64
 
@@ -365,6 +367,7 @@ elif [ "$1" = "script" ]; then
     #!/bin/bash 
     pacman-key --init
     pacman-key --populate
+    echo "PS1='(arcabox)[\\u@\\h \\W]\\$ '" >> ~/.bashrc
     exit
 EOF
 
@@ -394,52 +397,19 @@ EOF
     echo "$scriptprogram" >> "$ROOTPATH"/function.sh
     "$CHROOTPROG" "$ROOTPATH" "bash" "function.sh" || fallback
     umount "$ROOTPATH"
-    rm -rf "$ROOTPATH"
-    elif [ "$1" = "backup" ]; then
-    ROOTPATH="/usr/share/arcabox/containers/$2"
-    handleempty "$@"
-
-    if [ -d "$ROOTPATH" ]; then
-        echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Found $2${RESET}"
+    if [ -z $keep ]; then
+        rm -rf "$TARGET_DIR"
     else
-        echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Unknown Container: $2${RESET}"
-        exit 1
+        if [ "$keep" = true ]; then
+            echo -e "${BOLD}${YELLOW}=>${RESET}${BOLD} This Arcafile has been set as keep${RESET}"
+            NEWROOT="/usr/share/arcabox/containers/$name"
+            mkdir -p "$NEWROOT"
+            mv "$ROOTPATH" "$NEWROOT"
+            rm -rf "$TARGET_DIR" "$NEWROOT/root.x86_64/function.sh"
+        else
+            rm -rf "$TARGET_DIR"
+        fi
     fi
-
-    if ! [ -d "$ROOTPATH/backups" ]; then
-        mkdir -p "$ROOTPATH/backups"
-    fi
-
-    timestamp=$(date "+%S-%M-%H-%d-%m-%Y")
-
-    checkmount "$ROOTPATH" "$2"
-
-    echo -e "${YELLOW}${BOLD}=> ${RESET}${BOLD}Creating Backup: $timestamp${RESET}"
-    tar -cvf "$ROOTPATH/backups/$timestamp.backup.tar.xz" -I "xz" -C "$ROOTPATH" root.x86_64
-
-    echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Backup for $2 completed: $ROOTPATH/backups/$timestamp.backup.tar.xz${RESET}"
-
-elif [ "$1" = "import" ]; then
-    read -p "Enter a name for the new container: " name
-    ROOTPATH="/usr/share/arcabox/containers/$name"
-
-    if [ -d "$ROOTPATH" ]; then
-        echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Found $name${RESET}"
-    else
-        mkdir -p "$ROOTPATH"
-        exit 1
-    fi
-
-
-    if [ -f "$2" ]; then
-        tar -xf "$2" -C "$ROOTPATH"
-    else
-        echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Unable to find $2${RESET}"
-    fi
-    checkmount "$ROOTPATH" "$2"
-    
-
-    echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Successfully created $name${RESET}"
 
 else
     echo -e "${RED}${BOLD}=>${RESET}${BOLD} Check 'arcabox help'${RESET}"
