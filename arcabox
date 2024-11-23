@@ -64,7 +64,7 @@ if [ "$1" = "create" ]; then
     #!/bin/bash 
     pacman-key --init
     pacman-key --populate
-    echo "PS1='(arcabox)[\\u@\\h \\W]\\$'" >> ~/.bashrc
+    echo "PS1='(arcabox)[\\u@\\h \\W]\\$ '" >> ~/.bashrc
     exit
 EOF
 
@@ -220,6 +220,36 @@ elif [ "$1" = "restore" ]; then
     tar -xvf "$ROOTPATH/backups/$backupname.backup.tar.xz" -C "$ROOTPATH"
 
     echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Successfully restored $backupname in $2"
+
+elif [ "$1" = "clone" ]; then
+    ROOTPATHSRC="/usr/share/arcabox/containers/$2"
+    ROOTPATHDEST="/usr/share/arcabox/containers/$3"
+    
+    handleempty "$@"
+    
+    if [ -d "$ROOTPATHSRC" ]; then
+        echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Found $2${RESET}"
+    else
+        echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Unknown Container: $2${RESET}"
+        exit 1
+    fi
+    
+    if [ -d "$ROOTPATHDEST" ]; then
+        echo -e "${RED}${BOLD}=> ${RESET}${BOLD}$3 Already Exists.${RESET}"
+        exit 1
+    else
+        echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}$3 Does not exist. Proceeding to clone.${RESET}"
+    fi
+
+    checkmount "$ROOTPATHSRC" "$2"
+    
+    mkdir -p "$ROOTPATHDEST"
+    
+    echo -e "${YELLOW}${BOLD}=> ${RESET}${BOLD}Cloning $2 to $3...${RESET}"
+    
+    cp -r "$ROOTPATHSRC/root.x86_64" "$ROOTPATHDEST/"
+    
+    echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Clone completed successfully! $2 -> $3${RESET}"
 
 else
     echo -e "${RED}${BOLD}=>${RESET}${BOLD} Check 'arcabox help'${RESET}"
