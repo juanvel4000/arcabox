@@ -3,7 +3,7 @@
 
 Arcabox is a tool to manage Arch Linux Containers easily
 
-It is very small and is written in bash
+It is very small and is written in Shell script
 
 ## Installation
 ### Dependencies
@@ -15,29 +15,10 @@ Arcabox only works in **x86_64** Linux-based Computers
 ```bash
 ./install.sh install
 ```
-
-- You can nest Arcabox as much as you may
 ## Features
 
-- Only requires: curl and tar
-- Easy to use
-- Written in bash
 - Very Small
-## Usage
-#### Create a container
-```bash
-# arcabox create mycontainer
-```
-#### Run a command on the container
-```bash
-# arcabox run mycontainer "exec /usr/bin/bash"
-```
-#### Delete a container
-```bash
-# arcabox delete mycontainer
-```
-#### Open a shell in the container
-```bash
-# arcabox open mycontainer
-```
+- Only 2 Dependencies: tar, curl
+- Works on any x86_64 machine
+
 

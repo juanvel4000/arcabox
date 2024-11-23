@@ -1,12 +1,12 @@
 #!/bin/bash
 set -e
-
 RED='\033[0;31m' 
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 RESET='\033[0m'  
 BOLD='\033[1m'   
 UNDERLINE='\033[4m'
+trap ' ' SIGINT
 if [ "$(id -u)" -ne 0 ]; then
     echo -e "${RED}${BOLD}=>${RESET}${BOLD} Please run as root${RESET}"
     exit 1
@@ -19,9 +19,9 @@ fallback() {
 checkmount() {
     if mount | grep "on $1/root.x86_64" > /dev/null 2>&1; then
 	umount -R "$1/root.x86_64"
-else
-    echo -e "${YELLOW}${BOLD}=> ${RESET}${BOLD}$2 is not mounted${RESET}"
-fi
+    else
+        echo -e "${YELLOW}${BOLD}=> ${RESET}${BOLD}$2 is not mounted${RESET}"
+    fi
 }
 handleempty() {
        if [ -z "$2" ]; then
@@ -103,7 +103,7 @@ elif [ "$1" = "open" ]; then
     echo -e "${BOLD}${GREEN}=>${RESET}${BOLD}Successfully exited $2.${RESET}"
     umount "$ROOTPATH"
 elif [ "$1" = "help" ]; then
-	ARCAVERSION="1.4"
+	ARCAVERSION="1.5"
 	echo -e "Arcabox version ${UNDERLINE}$ARCAVERSION${RESET}"
 	echo "Arcabox is a tool to create Arch Linux cointainers"
 	echo "Usage: arcabox <command> <name>"
@@ -169,7 +169,16 @@ elif [ "$1" = "run" ]; then
     echo -e "${GREEN}${BOLD}=>${RESET}${BOLD} Successfully ran '$3' in $2 ${RESET}"
 
 elif [ "$1" = "list" ]; then
-	ls --color=auto /usr/share/arcabox/containers
+    for container in /usr/share/arcabox/containers/*; do
+        if [ -d "$container" ]; then
+            if pgrep -f "$container/root.x86_64" > /dev/null; then
+                echo -e "${GREEN}${BOLD}$container ${RESET}${BOLD}is RUNNING${RESET}"
+            else
+                echo -e "${RED}${BOLD}$container ${RESET}${BOLD}is STOPPED${RESET}"
+            fi
+        fi
+    done
+
 elif [ "$1" = "backup" ]; then
     ROOTPATH="/usr/share/arcabox/containers/$2"
     handleempty "$@"
