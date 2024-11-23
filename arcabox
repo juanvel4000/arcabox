@@ -119,7 +119,13 @@ elif [ "$1" = "help" ]; then
 	echo "list			-	List all containers"
     echo
     echo "backup        -   Backup a container"
+    echo
     echo "restore       -   Restore a container"
+    echo
+    echo "clone <src> <dest>    -   Clone a container"
+    echo
+    echo "update        -   Update a container"
+    echo
     echo "Licensed with GNU GPL version 3"
 
 elif [ "$1" = "delete" ]; then
@@ -250,7 +256,20 @@ elif [ "$1" = "clone" ]; then
     cp -r "$ROOTPATHSRC/root.x86_64" "$ROOTPATHDEST/"
     
     echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Clone completed successfully! $2 -> $3${RESET}"
-
+elif [ "$1" = "update" ]; then
+    ROOTPATH="/usr/share/arcabox/containers/$2"
+    
+    handleempty "$@"
+    
+    if [ -d "$ROOTPATH" ]; then
+        echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Found $2${RESET}"
+    else
+        echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Unknown Container: $2${RESET}"
+        exit 1
+    fi
+    checkmount "$ROOTPATH" "$2"
+    mount --bind "$ROOTPATH/root.x86_64" "$ROOTPATH/root.x86_64"
+    "$ROOTPATH/root.x86_64/bin/arch-chroot" "$ROOTPATH/root.x86_64" "pacman" "-Syu"
 else
     echo -e "${RED}${BOLD}=>${RESET}${BOLD} Check 'arcabox help'${RESET}"
     exit 1
