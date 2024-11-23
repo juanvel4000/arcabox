@@ -15,9 +15,8 @@ fi
 
 
 if [ "$1" = "uninstall" ]; then
-	echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Removing Arcabox Directories${RESET}"
+	echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Removing Arcabox...${RESET}"
 	rm -rf /usr/share/arcabox
-	echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Removing the Arcabox script${RESET}"
 	rm -rf /usr/local/bin/arcabox
 	echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD} Done.${RESET}"
 	exit 1
@@ -36,7 +35,6 @@ else
 fi
 	echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Installing Arcabox to /usr/local/bin${RESET}"
 	cp arcabox /usr/local/bin
-	echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Creating a Arcabox directory${RESET}"
 	mkdir -p /usr/share/arcabox
 	echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Done!${RESET}"
 

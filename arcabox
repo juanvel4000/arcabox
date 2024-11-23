@@ -7,6 +7,7 @@ RESET='\033[0m'
 BOLD='\033[1m'   
 UNDERLINE='\033[4m'
 trap ' ' SIGINT
+ARCAVERSION="1.5"
 if [ "$(id -u)" -ne 0 ]; then
     echo -e "${RED}${BOLD}=>${RESET}${BOLD} Please run as root${RESET}"
     exit 1
@@ -103,7 +104,6 @@ elif [ "$1" = "open" ]; then
     echo -e "${BOLD}${GREEN}=>${RESET}${BOLD}Successfully exited $2.${RESET}"
     umount "$ROOTPATH"
 elif [ "$1" = "help" ]; then
-	ARCAVERSION="1.5"
 	echo -e "Arcabox version ${UNDERLINE}$ARCAVERSION${RESET}"
 	echo "Arcabox is a tool to create Arch Linux cointainers"
 	echo "Usage: arcabox <command> <name>"
@@ -279,6 +279,15 @@ elif [ "$1" = "update" ]; then
     checkmount "$ROOTPATH" "$2"
     mount --bind "$ROOTPATH/root.x86_64" "$ROOTPATH/root.x86_64"
     "$ROOTPATH/root.x86_64/bin/arch-chroot" "$ROOTPATH/root.x86_64" "pacman" "-Syu"
+elif [ "$1" = "version" ]; then
+    echo "Arcabox version $ARCAVERSION"
+    cat << EOF
+    /\__ ARCABOX
+   / ^\| 
+  /____| Developed, Maintained and Created by juanvel400
+  |____| Licensed as GNU GPLv3
+EOF
+
 else
     echo -e "${RED}${BOLD}=>${RESET}${BOLD} Check 'arcabox help'${RESET}"
     exit 1
