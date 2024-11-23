@@ -395,6 +395,52 @@ EOF
     "$CHROOTPROG" "$ROOTPATH" "bash" "function.sh" || fallback
     umount "$ROOTPATH"
     rm -rf "$ROOTPATH"
+    elif [ "$1" = "backup" ]; then
+    ROOTPATH="/usr/share/arcabox/containers/$2"
+    handleempty "$@"
+
+    if [ -d "$ROOTPATH" ]; then
+        echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Found $2${RESET}"
+    else
+        echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Unknown Container: $2${RESET}"
+        exit 1
+    fi
+
+    if ! [ -d "$ROOTPATH/backups" ]; then
+        mkdir -p "$ROOTPATH/backups"
+    fi
+
+    timestamp=$(date "+%S-%M-%H-%d-%m-%Y")
+
+    checkmount "$ROOTPATH" "$2"
+
+    echo -e "${YELLOW}${BOLD}=> ${RESET}${BOLD}Creating Backup: $timestamp${RESET}"
+    tar -cvf "$ROOTPATH/backups/$timestamp.backup.tar.xz" -I "xz" -C "$ROOTPATH" root.x86_64
+
+    echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Backup for $2 completed: $ROOTPATH/backups/$timestamp.backup.tar.xz${RESET}"
+
+elif [ "$1" = "import" ]; then
+    read -p "Enter a name for the new container: " name
+    ROOTPATH="/usr/share/arcabox/containers/$name"
+
+    if [ -d "$ROOTPATH" ]; then
+        echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Found $name${RESET}"
+    else
+        mkdir -p "$ROOTPATH"
+        exit 1
+    fi
+
+
+    if [ -f "$2" ]; then
+        tar -xf "$2" -C "$ROOTPATH"
+    else
+        echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Unable to find $2${RESET}"
+    fi
+    checkmount "$ROOTPATH" "$2"
+    
+
+    echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Successfully created $name${RESET}"
+
 else
     echo -e "${RED}${BOLD}=>${RESET}${BOLD} Check 'arcabox help'${RESET}"
     exit 1
