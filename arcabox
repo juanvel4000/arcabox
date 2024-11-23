@@ -16,7 +16,19 @@ fallback() {
     umount -R "$ROOTPATH" || echo -e "${RED}${BOLD}=>${RESET}${BOLD}Failed to unmount $ROOTPATH.${RESET}"
     exit 1
 }
-
+checkmount() {
+    if mount | grep "on $1/root.x86_64" > /dev/null 2>&1; then
+	umount -R "$1/root.x86_64"
+else
+    echo -e "${YELLOW}${BOLD}=> ${RESET}${BOLD}$2 is not mounted${RESET}"
+fi
+}
+handleempty() {
+       if [ -z "$2" ]; then
+        echo -e "${RED}${BOLD}=>${RESET}${BOLD} Please put the container name${RESET}"
+        exit 1
+    fi
+}
 if [ "$1" = "create" ]; then
     if [ -z "$2" ]; then
         echo -e "${RED}${BOLD}=>${RESET}${BOLD} Please give this Container a name with ${RESET}${UNDERLINE}arcabox create <name>${RESET}"
@@ -32,10 +44,10 @@ if [ "$1" = "create" ]; then
     echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Created ${RESET}${UNDERLINE}$TARGET_DIR${RESET}"
 
     echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Downloading the Tarball...${RESET}"
-curl -o "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst https://geo.mirror.pkgbuild.com/iso/latest/archlinux-bootstrap-x86_64.tar.zst --progress-bar || fallback
+    curl -o "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst https://geo.mirror.pkgbuild.com/iso/latest/archlinux-bootstrap-x86_64.tar.zst --progress-bar || fallback
 
     echo -e "${BOLD}${GREEN}=>${RESET}${BOLD}Extracting the Tarball...${RESET}"
-tar -xvf "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst -C "$TARGET_DIR" --numeric-owner || fallback
+    tar -xvf "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst -C "$TARGET_DIR" --numeric-owner || fallback
 
     echo -e "${GREEN}=> ${BOLD}${RESET}${BOLD}Cleaning up...${RESET}"
     rm -rvf "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst "$TARGET_DIR"/pkglist.x86_64.txt
@@ -49,11 +61,11 @@ tar -xvf "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst -C "$TARGET_DIR" --num
     echo -e "${BOLD}${YELLOW}=> ${RESET}${BOLD}Configuring the system${RESET}"
 
     cat << EOF > "$ROOTPATH/setup.sh"
-#!/bin/bash
-pacman-key --init
-pacman-key --populate
-echo "PS1='(arcabox)[\\u@\\h \\W]\\$'" >> ~/.bashrc
-exit
+    #!/bin/bash 
+    pacman-key --init
+    pacman-key --populate
+    echo "PS1='(arcabox)[\\u@\\h \\W]\\$'" >> ~/.bashrc
+    exit
 EOF
 
     chmod +x "$ROOTPATH/setup.sh"
@@ -91,8 +103,8 @@ elif [ "$1" = "open" ]; then
     echo -e "${BOLD}${GREEN}=>${RESET}${BOLD}Successfully exited $2.${RESET}"
     umount "$ROOTPATH"
 elif [ "$1" = "help" ]; then
-	ARCAVERSION="1.2"
-	echo "Arcabox version $ARCAVERSION"
+	ARCAVERSION="1.4"
+	echo -e "Arcabox version ${UNDERLINE}$ARCAVERSION${RESET}"
 	echo "Arcabox is a tool to create Arch Linux cointainers"
 	echo "Usage: arcabox <command> <name>"
 	echo "Commands:"
@@ -106,14 +118,18 @@ elif [ "$1" = "help" ]; then
 	echo
 	echo "list			-	List all containers"
     echo
+    echo "backup        -   Backup a container"
+    echo "restore       -   Restore a container"
     echo "Licensed with GNU GPL version 3"
 
 elif [ "$1" = "delete" ]; then
+    handleempty "$@"
 	ROOTPATH="/usr/share/arcabox/containers/$2"
 	if [ -d "$ROOTPATH" ]; then
 		echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Found $2${RESET}"
 	else
 		echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Unknown Container: $2${RESET}"
+        exit
 	fi
 
 
@@ -129,7 +145,7 @@ fi
 
 elif [ "$1" = "run" ]; then
     ROOTPATH="/usr/share/arcabox/containers/$2/root.x86_64"
-    
+        handleempty "$@"
     if [ ! -d "$ROOTPATH" ]; then
         echo -e "${BOLD}${RED}=>${RESET}${BOLD} Unable to find $2${RESET}"
         exit 1
@@ -147,7 +163,63 @@ elif [ "$1" = "run" ]; then
     echo -e "${GREEN}${BOLD}=>${RESET}${BOLD} Successfully ran '$3' in $2 ${RESET}"
 
 elif [ "$1" = "list" ]; then
-	ls /usr/share/arcabox/containers
+	ls --color=auto /usr/share/arcabox/containers
+elif [ "$1" = "backup" ]; then
+    ROOTPATH="/usr/share/arcabox/containers/$2"
+    handleempty "$@"
+
+    if [ -d "$ROOTPATH" ]; then
+        echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Found $2${RESET}"
+    else
+        echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Unknown Container: $2${RESET}"
+        exit 1
+    fi
+
+    if ! [ -d "$ROOTPATH/backups" ]; then
+        mkdir -p "$ROOTPATH/backups"
+    fi
+
+    timestamp=$(date "+%S-%M-%H-%d-%m-%Y")
+
+    checkmount "$ROOTPATH" "$2"
+
+    echo -e "${YELLOW}${BOLD}=> ${RESET}${BOLD}Creating Backup: $timestamp${RESET}"
+    tar -cvf "$ROOTPATH/backups/$timestamp.backup.tar.xz" -I "xz" -C "$ROOTPATH" root.x86_64
+
+    echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Backup for $2 completed: $ROOTPATH/backups/$timestamp.backup.tar.xz${RESET}"
+
+elif [ "$1" = "restore" ]; then
+    ROOTPATH="/usr/share/arcabox/containers/$2"
+    handleempty "$@"
+
+    if [ -d "$ROOTPATH" ]; then
+        echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Found $2${RESET}"
+    else
+        echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Unknown Container: $2${RESET}"
+        exit 1
+    fi
+
+    echo -e "${YELLOW}${BOLD}=> ${RESET}${BOLD}Listing Backups${RESET}"
+    ls "$ROOTPATH/backups"
+
+    read -p "Enter the name of your backup (without .backup.tar.xz): " backupname
+
+    if [ -f "$ROOTPATH/backups/$backupname.backup.tar.xz" ]; then
+        echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Found $backupname ${RESET}"
+    else
+        echo -e "${BOLD}${RED}=> ${RESET}${BOLD}Unknown Backup: $backupname"
+        exit 1
+    fi
+
+    checkmount "$ROOTPATH" "$2"
+    
+    echo -e "${YELLOW}${BOLD}=> ${RESET}${BOLD}Cleaning up the container before Restoration${RESET}"
+    rm -rf "$ROOTPATH/root.x86_64"
+
+    echo -e "${YELLOW}${BOLD}=> ${RESET}${BOLD}Extracting the Backup${RESET}"
+    tar -xvf "$ROOTPATH/backups/$backupname.backup.tar.xz" -C "$ROOTPATH"
+
+    echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Successfully restored $backupname in $2"
 
 else
     echo -e "${RED}${BOLD}=>${RESET}${BOLD} Check 'arcabox help'${RESET}"
