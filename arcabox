@@ -15,6 +15,7 @@ fi
 check_file() {
     local file="$1"
 
+    # Initialize flags to false
     local found_name=false
     local found_packages=false
     local found_run=false
@@ -27,20 +28,16 @@ check_file() {
         if [[ "$line" == packages=* ]]; then
             found_packages=true
         fi
-
-    if [[ "$line" == scriptprogram=* ]]; then
-
+        if [[ "$line" == scriptprogram=* ]]; then
             found_run=true
         fi
-
     done < "$file"
-
-    # Exit immediately if any condition is not met
     if ! $found_name || ! $found_packages || ! $found_run; then
-        echo -e "${BOLD}${RED}=> ${RESET}${BOLD}This Arcafile has been incorrectly scripted${BOLD}${RESET}"
+        echo -e "${BOLD}${RED}=> ${RESET}${BOLD}This Arcafile has been incorrectly scripted.${RESET}"
         exit 1
     fi
 }
+
 
 
 fallback() {
@@ -78,7 +75,7 @@ if [ "$1" = "create" ]; then
     echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Downloading the Tarball...${RESET}"
     curl -o "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst https://geo.mirror.pkgbuild.com/iso/latest/archlinux-bootstrap-x86_64.tar.zst --progress-bar || fallback
 
-    echo -e "${BOLD}${GREEN}=>${RESET}${BOLD}Extracting the Tarball...${RESET}"
+    echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Extracting the Tarball...${RESET}"
     tar -xf "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst -C "$TARGET_DIR" --numeric-owner || fallback
 
     echo -e "${GREEN}=> ${BOLD}${RESET}${BOLD}Cleaning up...${RESET}"
@@ -349,7 +346,7 @@ elif [ "$1" = "script" ]; then
     echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Downloading the Tarball...${RESET}"
     curl -o "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst https://geo.mirror.pkgbuild.com/iso/latest/archlinux-bootstrap-x86_64.tar.zst --progress-bar || fallback
 
-    echo -e "${BOLD}${GREEN}=>${RESET}${BOLD}Extracting the Tarball...${RESET}"
+    echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Extracting the Tarball...${RESET}"
     tar -xf "$TARGET_DIR"/archlinux-bootstrap-x86_64.tar.zst -C "$TARGET_DIR" --numeric-owner || fallback
 
     echo -e "${GREEN}=> ${BOLD}${RESET}${BOLD}Cleaning up...${RESET}"
@@ -397,7 +394,7 @@ EOF
     echo "$scriptprogram" >> "$ROOTPATH"/function.sh
     "$CHROOTPROG" "$ROOTPATH" "bash" "function.sh" || fallback
     umount "$ROOTPATH"
-    if [ -z $keep ]; then
+    if [ -z "$keep" ]; then
         rm -rf "$TARGET_DIR"
     else
         if [ "$keep" = true ]; then
@@ -410,7 +407,6 @@ EOF
             rm -rf "$TARGET_DIR"
         fi
     fi
-
 else
     echo -e "${RED}${BOLD}=>${RESET}${BOLD} Check 'arcabox help'${RESET}"
     exit 1
