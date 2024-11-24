@@ -166,9 +166,6 @@ elif [ "$1" = "help" ]; then
     echo "update        -   Update a container"
     echo
     echo "script        -   Run an Arcafile script"
-    echo
-    echo "Licensed with GNU GPL version 3"
-
 elif [ "$1" = "delete" ]; then
     handleempty "$@"
 	ROOTPATH="/usr/share/arcabox/containers/$2"
@@ -327,7 +324,7 @@ elif [ "$1" = "version" ]; then
     /\__ ARCABOX
    / ^\| 
   /____| Developed, Maintained and Created by juanvel400
-  |____| Licensed as GNU GPLv3
+  |____|
 EOF
 
 elif [ "$1" = "script" ]; then
