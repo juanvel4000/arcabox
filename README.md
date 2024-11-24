@@ -6,36 +6,19 @@
   /____|
   |____|
 ```
-Arcabox is a tool to manage Arch Linux Containers easily
+Arcabox is a tool to manage small Arch Linux Containers in a minimal set of dependencies.
+It is designed to be small and run in any Linux-based x86_64 device.
 
-It is very small and is written in Shell script
-
-## Installation
-### Dependencies
-- **tar** (For extracting the tarball)
-- **curl** (For downloading the tarball)
-Arcabox only works in **x86_64** Linux-based Computers
-### Installation Process
-- Clone the Repository, and run (as root)
-```bash
-./install.sh install
-```
+Arcabox prepares a ready-to use Arch Linux environment isolated from the rest of your computer.
 ## Features
-
-- Very Small
-- Only 2 Dependencies: tar, curl
-- Works on any x86_64 machine
-
-
-## Arcafile
-An Arcafile is a shell-formatted script to define the creation of a temporal Arcabox container. Arcafiles can
-- Contain a shell script to run on the container
-- Install a list of packages
-- Can be saved if necessary
-**Example**
- ```bash
-name="neofetch" # Container Name
-scriptprogram="neofetch" # Shell Script to run in
-packages=(neofetch) ## Packages to install 
-keep=true # It will become a normal container after execution
-  ```
+- **Small and lightweight**, it weights less than a Megabyte
+- **Minimal set of dependencies**, it only requires **curl** and **tar** with *zstd* and *xz* support
+- **Updated**, it downloads the latest Arch Linux bootstrap tarball, and updates it during creation
+- **Quick**, the Bootstrap tarball is minimal, you can get an Arch Linux container in less than 5 minutes (depending on your computer)
+## Installation guide
+Installing Arcabox is simple and quick, you only need to clone this repository with
+`git clone https://github.com/juanvel4000/arcabox.git`, then you can run `./install.sh install` as root.
+or you can run
+```bash
+git clone https://github.com/juanvel4000/arcabox.git && cd arcabox && sudo ./install.sh install
+```
