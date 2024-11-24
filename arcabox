@@ -97,6 +97,9 @@ if [ "$1" = "create" ]; then
     pacman-key --init
     pacman-key --populate
     echo "PS1='(arcabox)[\\u@\\h \\W]\\$ '" >> ~/.bashrc
+    echo "en_US.UTF-8 UTF-8" > "$ROOTPATH/etc/locale.gen"
+    locale-gen
+    echo "LANG=en_US.UTF-8" > "$ROOTPATH/etc/locale.conf"
     exit
 EOF
 
