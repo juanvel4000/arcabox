@@ -22,5 +22,26 @@ or you can run
 ```bash
 git clone https://github.com/juanvel4000/arcabox.git && cd arcabox && sudo ./install.sh install
 ```
+## Arcafile
+An arcafile is a small configuration script that automates the creation of a Arcabox temporal container, it can contain an array of packages to be installed to the container, a shell script that can be run in the container, and it can be converted to a normal container if configured as so
+### Example Arcafile
+You can find an example Arcafile in this Repository as **Arcafile** or below
+```bash
+# Example Arcafile script
+# * marks as required
+# *Name of the container
+name="neofetch"
+# *Packages installed on the container (bash array)
+packages=("neofetch" "tree")
+# *Shell script to run in this container
+scriptprogram="
+#!/bin/sh
+neofetch
+cd ~
+tree -d /
+"
+# Set to true to convert the package into a normal container
+keep=false
+```
 ## License
 Arcabox is licensed with the **MIT/X11 License**, read **LICENSE**
