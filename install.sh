@@ -6,12 +6,6 @@ RESET='\033[0m'
 BOLD='\033[1m'   
 UNDERLINE='\033[4m'
 trap ' ' SIGINT
-if [ "$UID" = "0" ]; then
-    echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Running as root.${RESET}"
-else
-    echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Please run as root.${RESET}"
-    exit 1
-fi
 check() {
     if command -v "$1" &> /dev/null; then
         echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Found $1${RESET}"
@@ -21,6 +15,12 @@ check() {
             fi
 }
 if [ "$1" = "install" ]; then
+if [ "$UID" = "0" ]; then
+    echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Running as root.${RESET}"
+else
+    echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Please run as root.${RESET}"
+    exit 1
+fi
 check "zstd"
 check "tar"
 check "curl"
@@ -37,6 +37,12 @@ check "curl"
     mkdir -p "/usr/share/arcabox/"
     echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Done!${RESET}"
 elif [ "$1" = "uninstall" ]; then
+if [ "$UID" = "0" ]; then
+    echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Running as root.${RESET}"
+else
+    echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Please run as root.${RESET}"
+    exit 1
+fi
     if [ -f "/etc/arcabox.install.conf" ]; then
         source /etc/arcabox.install.conf
         rm -rf "/etc/arcabox.install.conf"
@@ -50,6 +56,10 @@ elif [ "$1" = "uninstall" ]; then
         echo -e "${BOLD}${RED}=> ${RESET}${BOLD}Arcabox is not installed, or /etc/arcabox.install.conf doesnt exist${RESET}"
         exit 1
     fi
+elif [ "$1" = "check" ]; then
+    check 'zstd'
+    check 'curl'
+    check 'tar'
 else
     echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Usage: ${UNDERLINE}install.sh${RESET} ${BOLD}<install|uninstall>${RESET}"
     exit 1

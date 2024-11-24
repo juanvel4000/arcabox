@@ -42,12 +42,12 @@ check_file() {
 
 fallback() {
     echo -e "${RED}${BOLD}=>${RESET}${BOLD}An error occurred. Cleaning up...${RESET}"
-    umount -R "$ROOTPATH" || echo -e "${RED}${BOLD}=>${RESET}${BOLD}Failed to unmount $ROOTPATH.${RESET}"
+    umount -l "$ROOTPATH" || echo -e "${RED}${BOLD}=>${RESET}${BOLD}Failed to unmount $ROOTPATH.${RESET}"
     exit 1
 }
 checkmount() {
     if mount | grep "on $1/root.x86_64" > /dev/null 2>&1; then
-	umount -R "$1/root.x86_64"
+	umount -l "$1/root.x86_64"
     else
         echo -e "${YELLOW}${BOLD}=> ${RESET}${BOLD}$2 is not mounted${RESET}"
     fi
@@ -62,6 +62,11 @@ if [ "$1" = "create" ]; then
     if [ -z "$2" ]; then
         echo -e "${RED}${BOLD}=>${RESET}${BOLD} Please give this Container a name with ${RESET}${UNDERLINE}arcabox create <name>${RESET}"
         exit 1
+    fi
+    if [ -z "$3" ]; then
+        echo
+    elif [ "$3" = "withaur" ]; then
+        echo -e "${BOLD}${YELLOW}=> ${RESET}${BOLD}withaur has been marked, this will install yay and Chaotic AUR${RESET}"
     fi
     CONTAINER_NAME=$(echo "$2" | tr -cd '[:alnum:]-_')
     TARGET_DIR="/usr/share/arcabox/containers/$CONTAINER_NAME"
@@ -91,12 +96,15 @@ if [ "$1" = "create" ]; then
 
     cat << EOF > "$ROOTPATH/setup.sh"
     #!/bin/bash 
+    set -e 
     pacman-key --init
     pacman-key --populate
     echo "PS1='(arcabox)[\\u@\\h \\W]\\$ '" >> ~/.bashrc
-    echo "en_US.UTF-8 UTF-8" > "$ROOTPATH/etc/locale.gen"
+    touch /etc/locale.gen
+    touch /etc/locale.conf
+    echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+    echo "LANG=en_US.UTF-8" >> /etc/locale.conf
     locale-gen
-    echo "LANG=en_US.UTF-8" > "$ROOTPATH/etc/locale.conf"
     exit
 EOF
 
@@ -112,9 +120,26 @@ EOF
     else
         echo "Server = https://geo.mirror.pkgbuild.com/\$repo/os/\$arch" >> "$ROOTPATH/etc/pacman.d/mirrorlist"
     fi
+        if [ "$3" = "withaur" ]; then
+        echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Setting up aur support${RESET}"
+        cat << EOF > "$ROOTPATH/setupaur.sh"
+        pacman -Sy
+        #!/bin/bash
+        set -e
+        pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
+pacman-key --lsign-key 3056513887B78AEB
+pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'
+pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+    echo "[chaotic-aur]
+Include = /etc/pacman.d/chaotic-mirrorlist" >> /etc/pacman.conf
+pacman -Sy --noconfirm yay
+EOF
+    "$CHROOTPROG" "$ROOTPATH" bash /setupaur.sh || fallback
+    rm -rf "$ROOTPATH/setupaur.sh"
+
+    fi
     echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Running pacman -Syu in $2...${RESET}"
     "$CHROOTPROG" "$ROOTPATH" pacman --noconfirm -Syu || fallback
-
 
     echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Finishing up${RESET}"
     umount "$ROOTPATH" || echo "Failed to unmount $ROOTPATH."
@@ -145,8 +170,9 @@ elif [ "$1" = "help" ]; then
 	echo "Usage: arcabox <command> <name>"
 	echo "Commands:"
 	echo "create			-	Create a new Container"
+    echo "create <name> withaur   -   Create a new Container with yay and Chaotic AUR"
 	echo
-	echo "open			    -	Open a Container"
+	echo "open			   -	Open a Container"
 	echo
 	echo "delete			-	Delete a Container"
 	echo
@@ -175,7 +201,7 @@ elif [ "$1" = "delete" ]; then
 
 
 if mount | grep "on $ROOTPATH/root.x86_64" > /dev/null 2>&1; then
-	umount -R "$ROOTPATH/root.x86_64"
+	umount -l "$ROOTPATH/root.x86_64"
 else
     echo -e "${YELLOW}${BOLD}=> ${RESET}${BOLD}$2 is not mounted${RESET}"
 fi
@@ -199,20 +225,17 @@ elif [ "$1" = "run" ]; then
     fi
 
 	"$ROOTPATH"/bin/arch-chroot "$ROOTPATH" "$3" || echo -e "${BOLD}${RED}=> ${RESET}${BOLD}Unable to run $3 in $2${RESET}"
-	umount -R "$ROOTPATH"
+	umount -l "$ROOTPATH"
 
     echo -e "${GREEN}${BOLD}=>${RESET}${BOLD} Successfully ran '$3' in $2 ${RESET}"
 
 elif [ "$1" = "list" ]; then
-    for container in /usr/share/arcabox/containers/*; do
-        if [ -d "$container" ]; then
-            if pgrep -f "$container/root.x86_64" > /dev/null; then
-                echo -e "${GREEN}${BOLD}$container ${RESET}${BOLD}is RUNNING${RESET}"
-            else
-                echo -e "${RED}${BOLD}$container ${RESET}${BOLD}is STOPPED${RESET}"
-            fi
-        fi
-    done
+for container in /usr/share/arcabox/containers/*; do
+    if [ -d "$container" ]; then
+        container_name=$(basename "$container")
+        echo -e "${BOLD}$container_name${RESET}"
+    fi
+done
 
 elif [ "$1" = "backup" ]; then
     ROOTPATH="/usr/share/arcabox/containers/$2"
@@ -233,7 +256,9 @@ elif [ "$1" = "backup" ]; then
 
     checkmount "$ROOTPATH" "$2"
     mount --bind "$ROOTPATH/root.x86_64" "$ROOTPATH/root.x86_64"
-    "$ROOTPATH/root.x86_64/bin/arch-chroot" "$ROOTPATH/root.x86_64" "rm -rf /var/cache"
+    if [ -d "$ROOTPATH/root.x86_64/var/cache" ]; then
+        rm -rf "$ROOTPATH/var/cache"
+    fi
     echo -e "${YELLOW}${BOLD}=> ${RESET}${BOLD}Creating Backup: $timestamp${RESET}"
     tar -cvf "$ROOTPATH/backups/$timestamp.backup.tar.xz" -I "xz" -C "$ROOTPATH" root.x86_64
 
@@ -314,11 +339,11 @@ elif [ "$1" = "update" ]; then
     fi
     checkmount "$ROOTPATH" "$2"
     mount --bind "$ROOTPATH/root.x86_64" "$ROOTPATH/root.x86_64"
-    "$ROOTPATH/root.x86_64/bin/arch-chroot" "$ROOTPATH/root.x86_64" "pacman" "-Syu"
+    "$ROOTPATH/root.x86_64/bin/arch-chroot" "$ROOTPATH/root.x86_64" "pacman" "--noconfirm" "-Syu"
 elif [ "$1" = "version" ]; then
     echo "Arcabox version $ARCAVERSION"
     cat << EOF
-    /\__ ARCABOX
+    /\-- ARCABOX
    / ^\| 
   /____| Developed, Maintained and Created by juanvel400
   |____|
@@ -386,7 +411,7 @@ EOF
     if [ ${#packages[@]} -gt 0 ]; then
         for package in "${packages[@]}"; do
             echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD} Installing $package...${RESET}"
-            "$CHROOTPROG" "$ROOTPATH" pacman --noconfirm -S "$package" || fallback
+            "$CHROOTPROG" "$ROOTPATH" pacman --noconfirm --needed -S "$package" || fallback
         done
     fi
     echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD} Running the script function...${RESET}"
