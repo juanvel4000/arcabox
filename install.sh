@@ -1,49 +1,57 @@
 #!/bin/bash
 set -e
-RED='\033[0;31m'
+RED='\033[0;31m' 
 GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
 RESET='\033[0m'  
 BOLD='\033[1m'   
-
-if [ "$UID" -ne 0 ] && [ -z "$DESTDIR" ]; then
-    echo -e "${BOLD}${RED}=> ${RESET}${BOLD}Please run as root${RESET}"
+UNDERLINE='\033[4m'
+trap ' ' SIGINT
+if [ "$UID" = "0" ]; then
+    echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Running as root.${RESET}"
+else
+    echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Please run as root.${RESET}"
     exit 1
 fi
-
-if [ "$1" = "uninstall" ]; then
-    echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Removing Arcabox...${RESET}"
-    rm -rf /usr/share/arcabox
-    rm -rf /usr/local/bin/arcabox
-    echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Done.${RESET}"
-    exit 0
-fi
-
+check() {
+    if command -v "$1" &> /dev/null; then
+        echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Found $1${RESET}"
+    else
+        echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Unable to find $1${RESET}"
+        exit 1
+            fi
+}
 if [ "$1" = "install" ]; then
-    if command -v curl >/dev/null 2>&1; then
-        echo -e "${BOLD}${GREEN}=>${RESET}${BOLD} Found cURL${RESET}"
+check "zstd"
+check "tar"
+check "curl"
+    if [ -z "$2" ]; then
+        DESTDIR="/usr/local/bin"
     else
-        echo -e "${BOLD}${RED}=>${RESET}${BOLD} Please install cURL to continue ${RESET}"
-        exit 1
+        DESTDIR="$2"
     fi
-
-    if command -v tar >/dev/null 2>&1; then
-        echo -e "${BOLD}${GREEN}=>${RESET}${BOLD} Found tar${RESET}"
-    else
-        echo -e "${BOLD}${RED}=>${RESET}${BOLD} Please install tar to continue ${RESET}"
-        exit 1
-    fi
-
-    INSTALL_DIR="${DESTDIR:-/usr/local/bin}"
-    echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Installing Arcabox to $INSTALL_DIR${RESET}"
-    cp arcabox "$INSTALL_DIR"
-
-    INSTALL_SHARE_DIR="${DESTDIR:-/usr/share}/arcabox"
-    mkdir -p "$INSTALL_SHARE_DIR"
-
+    chmod +x arcabox
+    mkdir -p "$DESTDIR"
+    cp arcabox "$DESTDIR"/arcabox
+    echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Installing arcabox to $DESTDIR${RESET}"
+    echo "DESTDIR=$DESTDIR" > /etc/arcabox.install.conf
+    mkdir -p "/usr/share/arcabox/"
     echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Done!${RESET}"
-    exit 0
+elif [ "$1" = "uninstall" ]; then
+    if [ -f "/etc/arcabox.install.conf" ]; then
+        source /etc/arcabox.install.conf
+        rm -rf "/etc/arcabox.install.conf"
+        echo -e "${BOLD}${GREEN}=> ${RESET}${BOLD}Removing the arcabox executable in $DESTDIR${RESET}"
+        rm -rf "$DESTDIR"
+        if [ -d "/usr/share/arcabox" ]; then
+            echo -e "${GREEN}${BOLD}=> ${RESET}${BOLD}Deleting /usr/share/arcabox${RESET}"
+            rm -rf "/usr/share/arcabox/"
+        fi
+    else
+        echo -e "${BOLD}${RED}=> ${RESET}${BOLD}Arcabox is not installed, or /etc/arcabox.install.conf doesnt exist${RESET}"
+        exit 1
+    fi
+else
+    echo -e "${RED}${BOLD}=> ${RESET}${BOLD}Usage: ${UNDERLINE}install.sh${RESET} ${BOLD}<install|uninstall>${RESET}"
+    exit 1
 fi
-
-echo -e "${BOLD}${RED}=> ${RESET}${BOLD} Usage: install.sh <install|uninstall>${RESET}"
-exit 1
-
