@@ -22,6 +22,8 @@ or you can run
 ```bash
 git clone https://github.com/juanvel4000/arcabox.git && cd arcabox && sudo ./install.sh install
 ```
+---
+If you're an Arch Linux user, you can install the (unnamed-repo)[https://juanvel4000.serv00.net/unnamed-repo] which contains Arcabox 
 ## Arcafile
 An arcafile is a small configuration script that automates the creation of a Arcabox temporal container, it can contain an array of packages to be installed to the container, a shell script that can be run in the container, and it can be converted to a normal container if configured as so
 ### Example Arcafile
