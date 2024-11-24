@@ -1,0 +1,4 @@
+name="neofetch"
+packages="neofetch"
+scriptprogram="neofetch"
+keep=true
