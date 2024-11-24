@@ -22,3 +22,5 @@ or you can run
 ```bash
 git clone https://github.com/juanvel4000/arcabox.git && cd arcabox && sudo ./install.sh install
 ```
+## License
+Arcabox is licensed with the **MIT/X11 License**, read **LICENSE**
