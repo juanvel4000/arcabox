@@ -1,4 +1,15 @@
+# Example Arcafile script
+# * marks as required
+# *Name of the container
 name="neofetch"
-packages="neofetch"
-scriptprogram="neofetch"
-keep=true
+# *Packages installed on the container (bash array)
+packages=("neofetch" "tree")
+# *Shell script to run in this container
+scriptprogram="
+#!/bin/sh
+neofetch
+cd ~
+tree -d /
+"
+# Set to true to convert the package into a normal container
+keep=false
